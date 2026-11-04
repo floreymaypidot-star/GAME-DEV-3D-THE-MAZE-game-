@@ -24,6 +24,11 @@ public class ElectricTorchOnOff : MonoBehaviour
     public float maxIntensity = 2.5f;
     public float drainPerSecond = 0.02f;  // 2.5 / 0.02 = mga 125 segundo bawat buong charge
 
+    [Header("Low battery effect")]
+    [SerializeField] private float fadeStart = 0.25f;      // magsisimulang lumabo sa 25% charge
+    [SerializeField] private float flickerStart = 0.15f;   // magsisimulang mag-flicker sa 15% charge
+    [SerializeField] private float flickerSpeed = 12f;     // mas mataas = mas mabilis ang kurap
+
     private float _drainMultiplier = 1f;
     private bool _flashLightOn = true;
     private Light _light;
@@ -57,7 +62,23 @@ public class ElectricTorchOnOff : MonoBehaviour
             intensityLight = Mathf.Max(0f, intensityLight - drainPerSecond * _drainMultiplier * Time.deltaTime);
 
         bool lit = _flashLightOn && (!batteryMode || intensityLight > 0f);
-        _light.intensity = lit ? maxIntensity * Mathf.Clamp01(Charge01 / 0.25f) : 0f;
+
+        float intensity = 0f;
+        if (lit)
+        {
+            // Fade: buo hanggang fadeStart, tapos dahan-dahang lumalabo papuntang 0
+            intensity = maxIntensity * Mathf.Clamp01(Charge01 / fadeStart);
+
+            // Flicker: nagsisimula sa flickerStart, mas madalas habang mas mababa ang charge
+            if (batteryMode && Charge01 < flickerStart)
+            {
+                float t = 1f - Charge01 / flickerStart;                       // 0 -> 1
+                float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0.5f);
+                float blink = noise < 0.35f ? 0.05f : 1f;                     // halos patay kapag mababa ang noise
+                intensity *= Mathf.Lerp(1f, blink, t);
+            }
+        }
+        _light.intensity = intensity;
 
         if (_emissionMaterialFade != null)
         {
