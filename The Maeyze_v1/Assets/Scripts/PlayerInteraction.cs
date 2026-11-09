@@ -22,16 +22,16 @@ public class PlayerInteraction : MonoBehaviour
 
     private void HandleRaycasting()
     {
+        InteractionText.text = "";   // laging linisin muna
+
         RaycastHit hit;
         if (!Physics.Raycast(mainCamera.transform.position, mainCamera.transform.forward, out hit, Range, LayerMask))
             return;
         if (!hit.collider.TryGetComponent(out IInteractable interactable))
-        {
-            InteractionText.text = "";
             return;
-        }
+
         InteractionText.text = interactable.InteractionText;
         if (Input.GetKeyDown(KeyCode.E))
-        interactable.Interact();
+            interactable.Interact();
     }
 }
